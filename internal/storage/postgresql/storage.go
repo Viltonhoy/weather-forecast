@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"errors"
+	"weather-forecast/internal/generated"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/log/zapadapter"
@@ -14,6 +15,8 @@ type Storage struct {
 	Logger *zap.Logger
 	DB     *pgxpool.Pool
 }
+
+var LocationInfoError = errors.New("City already exists")
 
 func NewStorage(ctx context.Context, logger *zap.Logger) (*Storage, error) {
 	if logger == nil {
@@ -50,22 +53,29 @@ func (s *Storage) Close() {
 	s.DB.Close()
 }
 
-func (s *Storage) AddWeatherValues(ctx context.Context) {
+func (s *Storage) AddLocationInfo(ctx context.Context, l generated.LocationInfo, c generated.CurrentInfo) error {
 	logger := s.Logger.With()
 	logger.Debug("")
 
-	firstInsertExec := `insert into location_info (
-		name,
-		region,
-		country,
-		lat,
-		lon,
-		tz_id,
-		localtime_epoch,
-		localtime
-	) values (
+	firstInsertExec := `insert into location_info (name, region, country, lat, lon, tz_id, localtime_epoch, localtime) values ($1, $2, $3, $4, $5, $6, $7, $8);`
 
-	) on conflict on constraint 
-	`
+	_, err := s.DB.Exec(
+		ctx,
+		firstInsertExec,
+		l.Name,
+		l.Region,
+		l.Country,
+		l.Lat,
+		l.Lon,
+		l.Tz_id,
+		l.Localtime_epoch,
+		l.Localtime,
+	)
 
+	if err != nil {
+		logger.Error("failed to insert record", zap.Error(LocationInfoError))
+		return LocationInfoError
+	}
+
+	return err
 }

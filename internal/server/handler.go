@@ -8,17 +8,17 @@ import (
 	"go.uber.org/zap"
 )
 
-type Handler struct {
-	Logger    *zap.Logger
-	Store     Storager
-	ApiClient ApiClient
+type handler struct {
+	Logger  *zap.Logger
+	CityLoc chan<- string
+	Service CityExistence
 }
 
 type City struct {
 	City string
 }
 
-func (h *Handler) ChangeLocation(w http.ResponseWriter, r *http.Request) {
+func (h *handler) changeLocation(w http.ResponseWriter, r *http.Request) {
 	var hand *City
 
 	body, _ := ioutil.ReadAll(r.Body)
@@ -28,4 +28,12 @@ func (h *Handler) ChangeLocation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = h.Service.AddNewCity(h.Logger, r.Context(), hand.City)
+	if err != nil {
+		//
+		return
+	}
+
+	h.CityLoc <- hand.City
+	return
 }

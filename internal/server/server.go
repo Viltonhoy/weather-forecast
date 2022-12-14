@@ -9,16 +9,15 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"weather-forecast/internal/storage/postgresql"
 
 	"github.com/caarlos0/env"
 	"go.uber.org/zap"
 )
 
 type Server struct {
-	logger        *zap.Logger
-	httpServer    *http.Server
-	afterShutdown func()
+	logger     *zap.Logger
+	httpServer *http.Server
+	// afterShutdown func()
 }
 
 type ServerConfig struct {
@@ -26,7 +25,7 @@ type ServerConfig struct {
 	Port int    `env:"ADDR_PORT"`
 }
 
-func New(logger *zap.Logger, storage *postgresql.Storage, afterShutdown func(), a ApiClient) (*Server, error) {
+func New(logger *zap.Logger, c chan<- string) (*Server, error) {
 	if logger == nil {
 		return nil, errors.New("no logger provided")
 	}
@@ -40,13 +39,12 @@ func New(logger *zap.Logger, storage *postgresql.Storage, afterShutdown func(), 
 
 	mux := http.NewServeMux()
 
-	h := Handler{
-		Logger:    logger,
-		Store:     storage,
-		ApiClient: a,
+	h := handler{
+		Logger:  logger,
+		CityLoc: c,
 	}
 
-	mux.HandleFunc("/loc", h.ChangeLocation)
+	mux.HandleFunc("/loc", h.changeLocation)
 
 	httpServer := http.Server{
 		Handler:      mux,
@@ -56,9 +54,9 @@ func New(logger *zap.Logger, storage *postgresql.Storage, afterShutdown func(), 
 	}
 
 	server := &Server{
-		logger:        logger,
-		httpServer:    &httpServer,
-		afterShutdown: afterShutdown,
+		logger:     logger,
+		httpServer: &httpServer,
+		// afterShutdown: afterShutdown,
 	}
 	return server, nil
 }
@@ -92,7 +90,7 @@ func (s *Server) Start() error {
 
 	<-idleConnClosed
 
-	s.afterShutdown()
+	// s.afterShutdown()
 
 	return nil
 }

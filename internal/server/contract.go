@@ -1,7 +1,11 @@
 package server
 
-type Storager interface {
-}
+import (
+	"context"
 
-type ApiClient interface {
+	"go.uber.org/zap"
+)
+
+type CityExistence interface {
+	AddNewCity(logger *zap.Logger, ctx context.Context, c string) error
 }
