@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"weather-forecast/internal/generated"
 
 	"go.uber.org/zap"
 )
@@ -17,14 +18,26 @@ func (s *CityExistencer) AddNewCity(logger *zap.Logger, ctx context.Context, c s
 	logger.Debug("")
 
 	if s.CityMap[c] == 0 {
-		err := s.Storager.AddLocationInfo(ctx)
+		err := s.Storager.LocationInfo(ctx)
 		if err != nil {
 			//
 			return err
 		}
+		s.CityMap[c] = s.Counter
+		s.Counter += 1
 	}
-	s.CityMap[c] = s.Counter
-	s.Counter += 1
+
+	return nil
+}
+
+func (s *CityExistencer) AddWeatherInfo(logger *zap.Logger, ctx context.Context, g generated.CurrentInfo, city string) error {
+	logger.Debug("")
+
+	err := s.Storager.WeatherInfo(ctx, g, city)
+	if err != nil {
+		//
+		return err
+	}
 
 	return nil
 }

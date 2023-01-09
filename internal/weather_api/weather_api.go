@@ -10,16 +10,14 @@ import (
 	"os"
 	"time"
 	"weather-forecast/internal/generated"
-	"weather-forecast/internal/service"
 
 	"go.uber.org/zap"
 )
 
 type ApiClient struct {
-	apiKey  string
-	Client  *http.Client
-	Store   service.Storager
-	CityLoc chan string
+	apiKey   string
+	Client   *http.Client
+	Servicer Servicer
 }
 
 var ErrApi = errors.New("")
@@ -47,12 +45,8 @@ func (a *ApiClient) CallAt(logger *zap.Logger, ctx context.Context, loc <-chan s
 		for {
 			select {
 			case <-t.C:
-				f(logger, city)
-				// err := a.Store.AddWeatherValues(ctx)
-				// if err != nil{
-				// 	logger.Error("")
-
-				// }
+				result, _ := f(logger, city)
+				a.Servicer.AddWeatherInfo(logger, ctx, *result.Current, city)
 			case newCity := <-loc:
 				city = newCity
 				logger.Debug("Change city to", zap.String("loc", city))

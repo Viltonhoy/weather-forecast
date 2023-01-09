@@ -9,15 +9,16 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"weather-forecast/internal/storage/postgresql"
 
 	"github.com/caarlos0/env"
 	"go.uber.org/zap"
 )
 
 type Server struct {
-	logger     *zap.Logger
-	httpServer *http.Server
-	// afterShutdown func()
+	logger        *zap.Logger
+	httpServer    *http.Server
+	afterShutdown func()
 }
 
 type ServerConfig struct {
@@ -25,7 +26,7 @@ type ServerConfig struct {
 	Port int    `env:"ADDR_PORT"`
 }
 
-func New(logger *zap.Logger, c chan<- string) (*Server, error) {
+func New(logger *zap.Logger, c chan<- string, storage *postgresql.Storage, afterShutdown func()) (*Server, error) {
 	if logger == nil {
 		return nil, errors.New("no logger provided")
 	}
@@ -54,9 +55,9 @@ func New(logger *zap.Logger, c chan<- string) (*Server, error) {
 	}
 
 	server := &Server{
-		logger:     logger,
-		httpServer: &httpServer,
-		// afterShutdown: afterShutdown,
+		logger:        logger,
+		httpServer:    &httpServer,
+		afterShutdown: afterShutdown,
 	}
 	return server, nil
 }

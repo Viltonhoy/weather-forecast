@@ -53,11 +53,11 @@ func (s *Storage) Close() {
 	s.DB.Close()
 }
 
-func (s *Storage) AddLocationInfo(ctx context.Context, l generated.LocationInfo, c generated.CurrentInfo) error {
+func (s *Storage) LocationInfo(ctx context.Context, l generated.LocationInfo) error {
 	logger := s.Logger.With()
 	logger.Debug("")
 
-	firstInsertExec := `insert into location_info (name, region, country, lat, lon, tz_id, localtime_epoch, localtime) values ($1, $2, $3, $4, $5, $6, $7, $8);`
+	firstInsertExec := `insert into location_info (name, region, country, lat, lon, tz_id, localtime_epoch, local_time) values ($1, $2, $3, $4, $5, $6, $7, $8);`
 
 	_, err := s.DB.Exec(
 		ctx,
@@ -75,6 +75,26 @@ func (s *Storage) AddLocationInfo(ctx context.Context, l generated.LocationInfo,
 	if err != nil {
 		logger.Error("failed to insert record", zap.Error(LocationInfoError))
 		return LocationInfoError
+	}
+
+	return err
+}
+
+func (s *Storage) WeatherInfo(ctx context.Context, c generated.CurrentInfo, name string) error {
+	logger := s.Logger.With()
+	logger.Debug("")
+
+	firstInsertExec := ``
+
+	_, err := s.DB.Exec(
+		ctx,
+		firstInsertExec,
+		name,
+		c,
+	)
+	if err != nil {
+		//
+		return err
 	}
 
 	return err

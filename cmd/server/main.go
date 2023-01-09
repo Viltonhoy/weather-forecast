@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"weather-forecast/internal/server"
+	"weather-forecast/internal/storage/postgresql"
 	weatherapi "weather-forecast/internal/weather_api"
 
 	"github.com/joho/godotenv"
@@ -23,10 +24,10 @@ func main() {
 
 	ctx := context.Background()
 
-	// storage, err := postgresql.NewStorage(ctx, logger)
-	// if err != nil {
-	// 	logger.Fatal("failed to create storage instance", zap.Error(err))
-	// }
+	storage, err := postgresql.NewStorage(ctx, logger)
+	if err != nil {
+		logger.Fatal("failed to create storage instance", zap.Error(err))
+	}
 
 	w := weatherapi.New()
 
@@ -34,8 +35,9 @@ func main() {
 
 	srv, err := server.New(
 		logger,
-		// storage.Close,
 		cityLoc,
+		storage,
+		storage.Close,
 	)
 
 	if err != nil {
